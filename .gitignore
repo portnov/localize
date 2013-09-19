@@ -5,3 +5,5 @@ examples/gmotest
 examples/gmodump
 *.mo
 log
+hgettext
+messages.po

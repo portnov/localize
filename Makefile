@@ -1,6 +1,9 @@
 GHC=ghc --make
 
-all: example
+all: hgettext example
+
+hgettext: hgettext.hs
+	$(GHC) $<
 
 example:
 	$(MAKE) -C examples/
