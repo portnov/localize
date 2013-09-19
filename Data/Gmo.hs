@@ -7,13 +7,12 @@ import Data.Binary
 import Data.Binary.Get
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
-import qualified Data.ByteString.Internal as BI
-import qualified Data.Trie as T
+import qualified Data.Text.Lazy as T
+import qualified Data.Text.Encoding as TE
+import qualified Data.Text.Lazy.Encoding as TLE
+import qualified Data.Trie as Trie
 import Data.Word
 import Text.Printf
-import Foreign.Ptr
-import Foreign.ForeignPtr
-import System.IO.MMap
 
 import Debug.Trace
 
@@ -36,7 +35,7 @@ instance Show GmoFile where
 
 data GmoData = GmoData {
   gmoSize :: Word32,
-  gmoData :: T.Trie [L.ByteString] }
+  gmoData :: Trie.Trie [T.Text] }
   deriving (Eq)
 
 instance Show GmoData where
@@ -45,18 +44,18 @@ instance Show GmoData where
 unpackGmoFile :: GmoFile -> GmoData
 unpackGmoFile (GmoFile {..}) = GmoData fSize trie
   where
-    getBS (len,offs) = L.take (fromIntegral len) $ L.drop (fromIntegral offs) fData
+    getOrig (len,offs) = L.take (fromIntegral len) $ L.drop (fromIntegral offs) fData
     
-    getBSs (len,offs) =
-      let bstr = getBS (len,offs)
+    getTrans (len,offs) =
+      let bstr = getOrig (len,offs)
       in  if L.null bstr
-            then [L.empty]
-            else L.split 0 bstr
+            then [T.empty]
+            else map TLE.decodeUtf8 $ L.split 0 bstr
 
-    originals = map L.toStrict $ map getBS fOriginals
-    translations = map getBSs fTranslations
+    originals = map L.toStrict $ map getOrig fOriginals
+    translations = map getTrans fTranslations
 
-    trie = T.fromList $ zip originals translations
+    trie = Trie.fromList $ zip originals translations
 
 parseGmo :: Get GmoFile
 parseGmo = do
@@ -94,7 +93,6 @@ withGmoFile :: FilePath -> (GmoFile -> IO a) -> IO a
 withGmoFile path go = do
   content <- L.readFile path
   let gmo = (runGet parseGmo content) {fData = content}
-  print $ L.length $ fData gmo
   result <- go gmo
   return result
 
