@@ -7,3 +7,4 @@ examples/gmodump
 log
 hgettext
 messages.po
+text-format/

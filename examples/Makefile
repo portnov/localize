@@ -17,8 +17,8 @@ run: gmotest
 	./gmotest
 
 clean:
-	find . -name *.o -delete
-	find . -name *.hi -delete
-	find . -name *.mo -delete
+	find . -name \*.o -delete
+	find . -name \*.hi -delete
+	find . -name \*.mo -delete
 	rm -f gmotest gmodump
 

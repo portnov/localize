@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExistentialQuantification #-}
 
 module Text.Localize where
 
@@ -12,6 +12,9 @@ import qualified Data.Text.Lazy.Encoding as TLE
 import qualified Data.Trie as Trie
 import Data.String
 import Text.Printf
+import qualified Data.Text.Format as Format
+import qualified Data.Text.Format.Params as Params
+import qualified Data.Text.Format.Types.Internal as I
 
 import Data.Gmo
 
@@ -28,11 +31,16 @@ instance Show Translations where
 
 data LocalizedString = LocalizedString {
     mlAsByteString :: B.ByteString,
-    mlAsText :: T.Text }
-  deriving (Eq)
+    mlAsText :: T.Text,
+    mlParams :: Params }
+
+instance Eq LocalizedString where
+  l1 == l2 = mlAsByteString l1 == mlAsByteString l2
 
 instance Show LocalizedString where
   show ml = T.unpack $ mlAsText ml
+
+data Params = forall ps. Params.Params ps => P ps
 
 class IsLocalizedString str where
   __ :: str -> LocalizedString
@@ -40,12 +48,14 @@ class IsLocalizedString str where
 instance IsLocalizedString T.Text where
   __ text = LocalizedString {
               mlAsByteString = L.toStrict $ TLE.encodeUtf8 text,
-              mlAsText = text }
+              mlAsText = text,
+              mlParams = P () }
 
 instance IsLocalizedString B.ByteString where
   __ bstr = LocalizedString {
               mlAsByteString = bstr,
-              mlAsText = TLE.decodeUtf8 $ L.fromStrict bstr }
+              mlAsText = TLE.decodeUtf8 $ L.fromStrict bstr,
+              mlParams = P () }
 
 instance IsLocalizedString String where
   __ str = __ (T.pack str)
@@ -80,7 +90,20 @@ getText bstr = do
     Nothing -> return $ TLE.decodeUtf8 $ L.fromStrict bstr
     Just res -> return res
 
-translate :: Localized m => LocalizedString -> m T.Text
-translate lstr = do
-  getText (mlAsByteString lstr)
+translateNoformat :: Localized m => LocalizedString -> m T.Text
+translateNoformat lstr = do
+  t <- getTranslations
+  lang <- getLanguage
+  case lookup lang (mlAsByteString lstr) 0 t of
+    Nothing -> return $ mlAsText lstr
+    Just res -> return res
+
+translate :: Localized m =>  LocalizedString -> m T.Text
+translate lstr@(LocalizedString _ _ (P params)) = do
+  formatText <- translateNoformat lstr
+  let fmt = I.Format $ T.toStrict formatText
+  return $ Format.format fmt params
+
+lprintf :: (IsLocalizedString str, Params.Params ps) => str -> ps -> LocalizedString
+lprintf str ps = (__ str) {mlParams = P ps}
 
