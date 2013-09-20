@@ -22,7 +22,7 @@ version = undefined
 
 data Options = Options {
       outputFile :: String,
-      keyword :: String,
+      keywords :: [String],
       printVersion :: Bool
     } deriving Show
 
@@ -36,15 +36,15 @@ options =
             (ReqArg (\d opts -> opts {outputFile = d ++ ".po"}) "NAME")
             "use NAME.po instead of messages.po",
      Option ['k'] ["keyword"] 
-            (ReqArg (\d opts -> opts {keyword = d}) "WORD")
-            "function name, in which wrapped searched words",
+            (ReqArg (\d opts -> opts {keywords = d: keywords opts}) "WORD")
+            "function names, in which searched words are wrapped. Can be used multiple times, for multiple funcitons",
      Option [] ["version"]
             (NoArg (\opts -> opts {printVersion = True}))
             "print version of hgettexts"
     ]
 
 
-defaultOptions = Options "messages.po" "__" False
+defaultOptions = Options "messages.po" ["__", "lprintf"] False
 
 parseArgs :: [String] -> IO (Options, [String])
 parseArgs args = 
@@ -54,8 +54,8 @@ parseArgs args =
     where header = "Usage: hgettext [OPTION] [INPUTFILE] ..."
 
 
-toTranslate :: String -> H.ParseResult (H.Module H.SrcSpanInfo) -> [(H.SrcSpanInfo, String)]
-toTranslate f (H.ParseOk z) = nub [ (loc, s) | H.App _ (H.Var _ (H.UnQual _ (H.Ident _ x))) (H.Lit _ (H.String loc s _)) <- universeBi z, x == f]
+toTranslate :: [String] -> H.ParseResult (H.Module H.SrcSpanInfo) -> [(H.SrcSpanInfo, String)]
+toTranslate f (H.ParseOk z) = nub [ (loc, s) | H.App _ (H.Var _ (H.UnQual _ (H.Ident _ x))) (H.Lit _ (H.String loc s _)) <- universeBi z, x `elem` f]
 toTranslate _ _ = []
 
 -- Create list of messages from a single file
@@ -100,7 +100,7 @@ process Options{printVersion = True} _ =
 
 process opts fl = do
   t <- mapM read' fl
-  pot <- formatPotFile $ map (\(n,c) -> formatMessages n $ toTranslate (keyword opts) c) t
+  pot <- formatPotFile $ map (\(n,c) -> formatMessages n $ toTranslate (keywords opts) c) t
   writeFile (outputFile opts) pot
     where read' "-" = getContents >>= \c -> return ("-", H.parseFileContents c)
           read' f = H.parseFile f >>= \m -> return (f, m)
