@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExistentialQuantification #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExistentialQuantification, DeriveDataTypeable #-}
 
 module Text.Localize where
 
@@ -15,6 +15,7 @@ import Text.Printf
 import qualified Data.Text.Format as Format
 import qualified Data.Text.Format.Params as Params
 import qualified Data.Text.Format.Types.Internal as I
+import Data.Typeable
 
 import Data.Gmo
 
@@ -33,6 +34,7 @@ data LocalizedString = LocalizedString {
     mlAsByteString :: B.ByteString,
     mlAsText :: T.Text,
     mlParams :: Params }
+  deriving (Typeable)
 
 instance Eq LocalizedString where
   l1 == l2 = mlAsByteString l1 == mlAsByteString l2
