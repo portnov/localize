@@ -53,7 +53,8 @@ instance Show LocalizedString where
   show ml = T.unpack $ mlAsText ml
 
 instance Monoid LocalizedString where
-  mempty = LocalizedString B.empty T.empty (P ())
+--   mempty = LocalizedString B.empty T.empty (P ())
+  mempty = Untranslated (T.pack "")
   mappend = Append
 
 data Params = forall ps. Params.Params ps => P ps
