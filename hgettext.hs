@@ -13,6 +13,8 @@ import Distribution.Simple.PreProcess.Unlit
 
 import Data.List
 import Data.Char
+import Data.Ord
+import Data.Function (on)
 import System.FilePath
 
 import Data.Version (showVersion)
@@ -60,7 +62,7 @@ toTranslate _ _ = []
 
 -- Create list of messages from a single file
 formatMessages :: String -> [(H.SrcSpanInfo, String)] -> String
-formatMessages path l = concat $ map potEntry l
+formatMessages path l = concat $ map potEntry $ nubBy ((==) `on` snd) $ sortBy (comparing snd) l
     where potEntry (l, s) = unlines [
                              "#: " ++ showSrc l,
                              "msgid " ++ (show s),
