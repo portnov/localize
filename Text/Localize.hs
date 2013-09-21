@@ -16,6 +16,7 @@ import Text.Printf
 import qualified Data.Text.Format as Format
 import qualified Data.Text.Format.Params as Params
 import qualified Data.Text.Format.Types.Internal as I
+import Data.List hiding (lookup)
 import Data.Monoid
 import Data.Typeable
 
@@ -37,14 +38,17 @@ data LocalizedString = LocalizedString {
         mlAsText :: T.Text,
         mlParams :: Params }
      | Append LocalizedString LocalizedString
+     | Untranslated T.Text
   deriving (Typeable)
 
 instance Eq LocalizedString where
+  (Untranslated t1) == (Untranslated t2) = t1 == t2
   (Append l1 l2) == (Append l3 l4) =
       (l1 == l3) && (l2 == l4)
   l1 == l2 = mlAsByteString l1 == mlAsByteString l2
 
 instance Show LocalizedString where
+  show (Untranslated t) = T.unpack t
   show (Append l1 l2) = show l1 ++ show l2
   show ml = T.unpack $ mlAsText ml
 
@@ -103,6 +107,7 @@ getText bstr = do
     Just res -> return res
 
 translateNoformat :: Localized m => LocalizedString -> m T.Text
+translateNoformat (Untranslated t) = return t
 translateNoformat (Append l1 l2) = T.append <$> translateNoformat l1 <*> translateNoformat l2
 translateNoformat lstr = do
   t <- getTranslations
@@ -112,6 +117,7 @@ translateNoformat lstr = do
     Just res -> return res
 
 translate :: Localized m =>  LocalizedString -> m T.Text
+translate (Untranslated t) = return t
 translate (Append l1 l2) = T.append <$> translate l1 <*> translate l2
 translate lstr@(LocalizedString _ _ (P params)) = do
   formatText <- translateNoformat lstr
@@ -120,4 +126,10 @@ translate lstr@(LocalizedString _ _ (P params)) = do
 
 lprintf :: (IsLocalizedString str, Params.Params ps) => str -> ps -> LocalizedString
 lprintf str ps = (__ str) {mlParams = P ps}
+
+unlinesL :: [LocalizedString] -> LocalizedString
+unlinesL list = mconcat $ intersperse (Untranslated $ T.pack "\n") list
+
+unwordsL :: [LocalizedString] -> LocalizedString
+unwordsL list = mconcat $ intersperse (Untranslated $ T.pack " ") list
 
