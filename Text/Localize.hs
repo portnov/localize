@@ -106,15 +106,19 @@ getText bstr = do
     Nothing -> return $ TLE.decodeUtf8 $ L.fromStrict bstr
     Just res -> return res
 
+translateNoformat' :: Translations -> LanguageId -> LocalizedString -> T.Text
+translateNoformat' t lang lstr =
+  case lookup lang (mlAsByteString lstr) 0 t of
+    Nothing -> mlAsText lstr
+    Just res -> res
+
 translateNoformat :: Localized m => LocalizedString -> m T.Text
 translateNoformat (Untranslated t) = return t
 translateNoformat (Append l1 l2) = T.append <$> translateNoformat l1 <*> translateNoformat l2
 translateNoformat lstr = do
   t <- getTranslations
   lang <- getLanguage
-  case lookup lang (mlAsByteString lstr) 0 t of
-    Nothing -> return $ mlAsText lstr
-    Just res -> return res
+  return $ translateNoformat' t lang lstr
 
 translate :: Localized m =>  LocalizedString -> m T.Text
 translate (Untranslated t) = return t
@@ -123,6 +127,14 @@ translate lstr@(LocalizedString _ _ (P params)) = do
   formatText <- translateNoformat lstr
   let fmt = I.Format $ T.toStrict formatText
   return $ Format.format fmt params
+
+translate' :: Translations -> LanguageId -> LocalizedString -> T.Text
+translate' _ _ (Untranslated t) = t
+translate' t lang (Append l1 l2) = translate' t lang l1 `T.append` translate' t lang l2
+translate' t lang lstr@(LocalizedString _ _ (P params)) = 
+  let formatText = translateNoformat' t lang lstr
+      fmt = I.Format $ T.toStrict formatText
+  in  Format.format fmt params
 
 lprintf :: (IsLocalizedString str, Params.Params ps) => str -> ps -> LocalizedString
 lprintf str ps = (__ str) {mlParams = P ps}
