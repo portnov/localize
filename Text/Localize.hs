@@ -3,6 +3,7 @@
 module Text.Localize where
 
 import Prelude hiding (lookup)
+import Control.Applicative
 import Control.Monad
 import qualified Data.Map as M
 import qualified Data.ByteString as B
@@ -15,6 +16,7 @@ import Text.Printf
 import qualified Data.Text.Format as Format
 import qualified Data.Text.Format.Params as Params
 import qualified Data.Text.Format.Types.Internal as I
+import Data.Monoid
 import Data.Typeable
 
 import Data.Gmo
@@ -31,16 +33,24 @@ instance Show Translations where
   show t = printf "<Translations to languages: %s>" (unwords $ M.keys $ tMap t)
 
 data LocalizedString = LocalizedString {
-    mlAsByteString :: B.ByteString,
-    mlAsText :: T.Text,
-    mlParams :: Params }
+        mlAsByteString :: B.ByteString,
+        mlAsText :: T.Text,
+        mlParams :: Params }
+     | Append LocalizedString LocalizedString
   deriving (Typeable)
 
 instance Eq LocalizedString where
+  (Append l1 l2) == (Append l3 l4) =
+      (l1 == l3) && (l2 == l4)
   l1 == l2 = mlAsByteString l1 == mlAsByteString l2
 
 instance Show LocalizedString where
+  show (Append l1 l2) = show l1 ++ show l2
   show ml = T.unpack $ mlAsText ml
+
+instance Monoid LocalizedString where
+  mempty = LocalizedString B.empty T.empty (P ())
+  mappend = Append
 
 data Params = forall ps. Params.Params ps => P ps
 
@@ -80,7 +90,7 @@ loadTranslations pairs = do
            return (lang, gmo)
   return $ Translations $ M.fromList res
 
-class Monad m => Localized m where
+class (Monad m, Applicative m) => Localized m where
   getLanguage :: m LanguageId
   getTranslations :: m Translations
 
@@ -93,6 +103,7 @@ getText bstr = do
     Just res -> return res
 
 translateNoformat :: Localized m => LocalizedString -> m T.Text
+translateNoformat (Append l1 l2) = T.append <$> translateNoformat l1 <*> translateNoformat l2
 translateNoformat lstr = do
   t <- getTranslations
   lang <- getLanguage
@@ -101,6 +112,7 @@ translateNoformat lstr = do
     Just res -> return res
 
 translate :: Localized m =>  LocalizedString -> m T.Text
+translate (Append l1 l2) = T.append <$> translate l1 <*> translate l2
 translate lstr@(LocalizedString _ _ (P params)) = do
   formatText <- translateNoformat lstr
   let fmt = I.Format $ T.toStrict formatText
