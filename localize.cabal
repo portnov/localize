@@ -20,4 +20,5 @@ library
                        text-format-heavy >= 0.1,
                        haskell-gettext >= 0.1.1.0,
                        time >=1.4,
-                       transformers >=0.3
+                       transformers >=0.3,
+                       Glob >= 0.7.14

@@ -1,5 +1,6 @@
-{-# LANGUAGE TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeSynonymInstances, GeneralizedNewtypeDeriving, OverloadedStrings #-}
 
+import Control.Applicative
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.State
@@ -7,8 +8,8 @@ import System.FilePath
 import System.FilePath.Glob
 import qualified Data.Text.Lazy as T
 import qualified Data.Text.Lazy.IO as TLIO
-import Data.Text.Format
 import System.IO
+import Data.Text.Format.Heavy (Single (..))
 
 import Text.Localize
 
@@ -21,10 +22,10 @@ enumLanguages = do
 data LocState = LocState {
   lsTranslations :: Translations, 
   lsLanguage :: LanguageId }
-  deriving (Eq, Show)
+  deriving (Show)
 
 newtype Loc a = Loc { unLoc :: StateT LocState IO a }
-  deriving (Monad, MonadIO)
+  deriving (Functor, Applicative, Monad, MonadIO)
 
 setLang :: LanguageId -> Loc ()
 setLang lang = Loc $ modify $ \st -> st {lsLanguage = lang}
@@ -42,7 +43,7 @@ runLoc (Loc loc) = do
 
 hello :: T.Text -> Loc ()
 hello name = do
-  tran <- translate $ lprintf "Hello, {}!" (Only name)
+  tran <- __f "Hello, {}!" (Single name)
   Loc $ lift $ TLIO.putStrLn tran
 
 main = runLoc $ do
