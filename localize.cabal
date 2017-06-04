@@ -1,10 +1,6 @@
 name:                localize
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            GNU Gettext-based messages localization library
-description:         This package provides loader for GNU Gettext .mo (.gmo) files, and API to use
-                     them from within Haskell. Unlike original GNU gettext library, this API enables
-                     program to change target language at any time - actually, calling code should
-                     provide target language at each call of `translate' function, for each string.
 license:             BSD3
 license-file:        LICENSE
 author:              IlyaPortnov
@@ -15,14 +11,13 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 library
-  exposed-modules:     Data.Gmo,
-                       Text.Localize 
+  exposed-modules:     Text.Localize 
   build-depends:       base > 4 && < 5,
-                       binary ==0.7.*,
+                       binary >=0.7,
                        bytestring ==0.10.*,
-                       text ==0.11.*,
-                       bytestring-trie ==0.2.*,
-                       containers ==0.5.*,
-                       text-format ==0.3.0.9,
-                       time ==1.4.*,
-                       transformers ==0.3.*
+                       text >= 1.2,
+                       containers >=0.5,
+                       text-format-heavy >= 0.1,
+                       haskell-gettext >= 0.1.1.0,
+                       time >=1.4,
+                       transformers >=0.3
