@@ -27,7 +27,7 @@ loadTranslations pairs = do
 type Facet = String
 
 data LocatePolicy = LocatePolicy {
-    lcBasePath :: FilePath -- ^ Path to directory with translations, e.g. @"\/usr\/share\/locale"@. Defaults to @"locale"@.
+    lcBasePaths :: [FilePath] -- ^ Paths to directory with translations, e.g. @"\/usr\/share\/locale"@. Defaults to @"locale"@.
   , lcName :: String       -- ^ Catalog file name (in gettext this is also known as text domain). Defaults to @"messages"@.
   , lcFacet :: Facet       -- ^ Locale facet. Defaults to @LC_MESSAGES@.
   , lcFormat :: Format     -- ^ File path format. The following variables can be used:
@@ -45,45 +45,46 @@ data LocatePolicy = LocatePolicy {
 
 instance Default LocatePolicy where
   def = LocatePolicy {
-          lcBasePath = "locale",
+          lcBasePaths = ["locale"],
           lcName = "messages",
           lcFacet = "LC_MESSAGES",
           lcFormat = "{base}/{language}/{facet}/{name}.mo"
         }
 
 -- | Usual Linux translations location policy.
--- Catalog files are found under @\/usr\/share\/locale\/{language}\/LC_MESSAGES\/{name}.mo@.
+-- Catalog files are found under @\/usr\/[local\/]share\/locale\/{language}\/LC_MESSAGES\/{name}.mo@.
 linuxLocation :: String        -- ^ Catalog file name (text domain)
               -> LocatePolicy
-linuxLocation name = def {lcBasePath = "/usr/share/locale", lcName = name}
+linuxLocation name = def {lcBasePaths = ["/usr/share/locale", "/usr/local/share/locale"], lcName = name}
 
 -- | Simple translations location polciy, assuming all catalog files located at
 -- @{base}\/{language}.mo@.
 localLocation :: FilePath      -- ^ Path to directory with translations
               -> LocatePolicy
-localLocation base = def {lcBasePath = base, lcFormat = "{base}/{language}.mo"}
+localLocation base = def {lcBasePaths = [base], lcFormat = "{base}/{language}.mo"}
 
 -- | Locate and load translations according to specified policy.
 locateTranslations :: MonadIO m => LocatePolicy -> m Translations
 locateTranslations (LocatePolicy {..}) = liftIO $ do
-    basePath <- makeAbsolute lcBasePath
-    let vars = M.fromList $
-                 [("base", basePath),
-                  ("language", "*"),
-                  ("facet", lcFacet),
-                  ("name", lcName)] :: M.Map T.Text String
-        Format fmtItems = lcFormat
-        (fmtBase, fmtTail) = breakFormat fmtItems
-        pathGlob = T.unpack (format lcFormat vars)
-        pathBaseLen = fromIntegral $ T.length (format (Format fmtBase) vars)
-        pathTailLen = fromIntegral $ T.length (format (Format fmtTail) vars)
-    paths <- glob pathGlob
-    pairs <- forM paths $ \path -> do
-               let pathWithoutBase = drop pathBaseLen path
-                   languageLen = length pathWithoutBase - pathTailLen
-                   language = take languageLen pathWithoutBase
-               return (language, path)
-    loadTranslations pairs
+    basePaths <- mapM makeAbsolute lcBasePaths
+    pairs <- forM basePaths $ \basePath -> do
+        let vars = M.fromList $
+                     [("base", basePath),
+                      ("language", "*"),
+                      ("facet", lcFacet),
+                      ("name", lcName)] :: M.Map T.Text String
+            Format fmtItems = lcFormat
+            (fmtBase, fmtTail) = breakFormat fmtItems
+            pathGlob = T.unpack (format lcFormat vars)
+            pathBaseLen = fromIntegral $ T.length (format (Format fmtBase) vars)
+            pathTailLen = fromIntegral $ T.length (format (Format fmtTail) vars)
+        paths <- glob pathGlob
+        forM paths $ \path -> do
+             let pathWithoutBase = drop pathBaseLen path
+                 languageLen = length pathWithoutBase - pathTailLen
+                 language = take languageLen pathWithoutBase
+             return (language, path)
+    loadTranslations $ concat pairs
   where
     breakFormat items =
       let (hd, tl) = break isLanguage items
