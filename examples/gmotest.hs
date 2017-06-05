@@ -12,12 +12,8 @@ import System.IO
 import Data.Text.Format.Heavy (Single (..))
 
 import Text.Localize
-
-enumLanguages :: IO [(LanguageId, FilePath)]
-enumLanguages = do
-  files <- glob "mo/*.mo"
-  let langs = map (\f -> take (length f - 3) f) $ map takeFileName files
-  return $ zip langs files
+import Text.Localize.Types
+import Text.Localize.Load
 
 data LocState = LocState {
   lsTranslations :: Translations, 
@@ -36,8 +32,8 @@ instance Localized Loc where
 
 runLoc :: Loc a -> IO a
 runLoc (Loc loc) = do
-  pairs <- enumLanguages
-  trans <- loadTranslations pairs
+  let policy = localLocation "mo"
+  trans <- locateTranslations policy
   let emptyState = LocState trans ""
   evalStateT loc emptyState
 

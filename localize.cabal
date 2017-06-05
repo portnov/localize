@@ -15,12 +15,16 @@ library
                        Text.Localize.Types,
                        Text.Localize.Load
   build-depends:       base > 4 && < 5,
+                       mtl >= 2.2.1,
                        binary >=0.7,
                        bytestring ==0.10.*,
                        text >= 1.2,
+                       data-default >= 0.7,
                        containers >=0.5,
                        text-format-heavy >= 0.1,
                        haskell-gettext >= 0.1.1.0,
                        time >=1.4,
                        transformers >=0.3,
+                       filepath >= 1.4,
+                       directory >= 1.3,
                        Glob >= 0.7.14
