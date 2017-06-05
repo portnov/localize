@@ -51,12 +51,19 @@ instance Default LocatePolicy where
           lcFormat = "{base}/{language}/{facet}/{name}.mo"
         }
 
-linuxLocation :: String -> LocatePolicy
+-- | Usual Linux translations location policy.
+-- Catalog files are found under @\/usr\/share\/locale\/{language}\/LC_MESSAGES\/{name}.mo@.
+linuxLocation :: String        -- ^ Catalog file name (text domain)
+              -> LocatePolicy
 linuxLocation name = def {lcBasePath = "/usr/share/locale", lcName = name}
 
-localLocation :: FilePath -> LocatePolicy
+-- | Simple translations location polciy, assuming all catalog files located at
+-- @{base}\/{language}.mo@.
+localLocation :: FilePath      -- ^ Path to directory with translations
+              -> LocatePolicy
 localLocation base = def {lcBasePath = base, lcFormat = "{base}/{language}.mo"}
 
+-- | Locate and load translations according to specified policy.
 locateTranslations :: MonadIO m => LocatePolicy -> m Translations
 locateTranslations (LocatePolicy {..}) = liftIO $ do
     basePath <- makeAbsolute lcBasePath

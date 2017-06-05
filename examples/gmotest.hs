@@ -12,8 +12,6 @@ import System.IO
 import Data.Text.Format.Heavy (Single (..))
 
 import Text.Localize
-import Text.Localize.Types
-import Text.Localize.Load
 
 data LocState = LocState {
   lsTranslations :: Translations, 
