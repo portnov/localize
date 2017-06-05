@@ -11,7 +11,9 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 library
-  exposed-modules:     Text.Localize 
+  exposed-modules:     Text.Localize,
+                       Text.Localize.Types,
+                       Text.Localize.Load
   build-depends:       base > 4 && < 5,
                        binary >=0.7,
                        bytestring ==0.10.*,

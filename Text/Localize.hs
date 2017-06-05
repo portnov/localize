@@ -19,43 +19,14 @@ import qualified Data.Gettext as Gettext
 import qualified Data.Text.Format.Heavy as F
 import Data.Text.Format.Heavy.Parse (parseFormat)
 
--- | Language identifier
-type LanguageId = String
-
--- | Context name
-type Context = B.ByteString
-
--- | String to be translated
-type TranslationSource = B.ByteString
-
-data Translations = Translations {
-  tMap :: M.Map LanguageId Gettext.Catalog }
-
-instance Show Translations where
-  show t = "<Translations to languages: " ++ (unwords $ M.keys $ tMap t) ++ ">"
-
-toText :: TranslationSource -> T.Text
-toText bstr = T.fromStrict $ TE.decodeUtf8 bstr
+import Text.Localize.Types
+import Text.Localize.Load
 
 lookup :: Translations -> LanguageId -> TranslationSource -> T.Text
 lookup t lang bstr =
   case M.lookup lang (tMap t) of
     Nothing -> toText bstr
     Just gmo -> Gettext.gettext gmo bstr
-
-loadTranslations :: [(LanguageId, FilePath)] -> IO Translations
-loadTranslations pairs = do
-  res <- forM pairs $ \(lang, path) -> do
-           gmo <- Gettext.loadCatalog path
-           return (lang, gmo)
-  return $ Translations $ M.fromList res
-
-class (Monad m, Applicative m) => Localized m where
-  getLanguage :: m LanguageId
-  getTranslations :: m Translations
-
-  getContext :: m (Maybe Context)
-  getContext = return Nothing
 
 withTranslation :: Localized m => (b -> r) -> (Gettext.Catalog -> Maybe Context -> b -> r) -> (b -> m r)
 withTranslation dflt fn b = do
