@@ -9,7 +9,8 @@ module Text.Localize
    lookup,
    -- * Reexports
    module Text.Localize.Types,
-   module Text.Localize.Load
+   module Text.Localize.Load,
+   module Text.Localize.Locale
   ) where
 
 import Prelude hiding (lookup)
@@ -31,6 +32,7 @@ import Data.Text.Format.Heavy.Parse (parseFormat)
 
 import Text.Localize.Types
 import Text.Localize.Load
+import Text.Localize.Locale
 
 -- | Look up for translation. Returns source string if translation not found.
 lookup :: Translations -> LanguageId -> TranslationSource -> T.Text
