@@ -21,11 +21,11 @@ hello name = do
 
 main :: IO ()
 main = do
-  liftIO $ putStr "Your name: "
-  liftIO $ hFlush stdout
-  name <- liftIO $ TLIO.getLine
-
   setupTranslations $ localLocation "mo"
+
+  TLIO.putStr =<< __ "Your name: "
+  hFlush stdout
+  name <- liftIO $ TLIO.getLine
   
   withLanguage "en" $ hello name
   withLanguage "ru" $ hello name

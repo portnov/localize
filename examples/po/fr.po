@@ -1,3 +1,6 @@
 
+msgid "Your name: "
+msgstr "Votre nom: "
+
 msgid "Hello, {}!"
 msgstr "Bonjour, {}!"

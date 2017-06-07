@@ -1,3 +1,6 @@
 
+msgid "Your name: "
+msgstr "Ваше имя: "
+
 msgid "Hello, {}!"
 msgstr "Привет, {}!"
