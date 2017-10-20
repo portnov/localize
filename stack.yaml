@@ -2,12 +2,16 @@ resolver: lts-8.16
 
 packages: 
   - '.'
-  - '../haskell-gettext/'
-  - '../text-format-heavy/'
+  - location:
+      git: https://github.com/portnov/text-format-heavy.git
+      commit: master
+    extra-dep: true
+  - location:
+      git: https://github.com/portnov/haskell-gettext.git
+      commit: master
+    extra-dep: true
 
-extra-deps: 
-  - haskell-gettext-0.1.1.0
-  - text-format-heavy-0.1.0.0
+extra-deps: []
 
 # Override default flag values for local packages and extra-deps
 flags: {}
