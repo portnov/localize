@@ -22,6 +22,8 @@ based on [haskell-gettext][1] package. The key features are:
   since it supports named variable placeholders, much easier for translators
   to understand.
 
+Please refer to Haddock documentation and to examples in `examples/` directory.
+
 [1]: https://hackage.haskell.org/package/haskell-gettext
 [2]: https://hackage.haskell.org/package/text-format-heavy
 
