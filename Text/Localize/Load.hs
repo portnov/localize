@@ -1,6 +1,13 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExistentialQuantification, DeriveDataTypeable, OverloadedStrings, RecordWildCards #-}
-
-module Text.Localize.Load where
+-- | This module contains definitions for loading translation catalogs.
+module Text.Localize.Load
+  ( -- * Data types
+    LocatePolicy (..), Facet,
+    -- * Main functions
+    loadTranslations, locateTranslations,
+    -- * Commonly used location policies
+    linuxLocation, localLocation
+  ) where
 
 import Control.Monad
 import Control.Monad.Trans
@@ -26,6 +33,7 @@ loadTranslations pairs = do
 -- | Locale facet (@LC_MESSAGES@ and siblings).
 type Facet = String
 
+-- | This data type defines where to search for catalog files (@.mo@ or @.gmo@) in the file system.
 data LocatePolicy = LocatePolicy {
     lcBasePaths :: [FilePath] -- ^ Paths to directory with translations, e.g. @"\/usr\/share\/locale"@. Defaults to @"locale"@.
   , lcName :: String       -- ^ Catalog file name (in gettext this is also known as text domain). Defaults to @"messages"@.

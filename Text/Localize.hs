@@ -1,12 +1,15 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, ExistentialQuantification, DeriveDataTypeable #-}
-
+-- | This is the main module of the @localize@ package.
+-- It contains definitions of general use and reexport generally required internal modules.
 module Text.Localize
   (
+   -- $description
+   --
    -- * Most used functions
    __, __n, __f,
    -- * Basic functions
    translate, translateN, translateNFormat, 
-   lookup,
+   lookup, withTranslation,
    -- * Reexports
    module Text.Localize.Types,
    module Text.Localize.Load,
@@ -34,6 +37,51 @@ import Text.Localize.Types
 import Text.Localize.Load
 import Text.Localize.Locale
 
+-- $description
+--
+-- This is the main module of the @localize@ package. In most cases, you have to import only
+-- this module. In specific cases, you may also want to import Text.Localize.IO or Text.Localize.State.
+--
+-- All functions exported by @localize@ package work with any instance of the
+-- @Localized@ type class. There are two simple examples of this type class
+-- implementation provided in separate modules (IO and State); however, in
+-- complex applications it may be more convinient to implement @Localized@
+-- instance for the monadic stack you already have.
+--
+-- Example of usage is:
+--
+-- @
+-- import qualified Data.Text as T
+-- import qualified Data.Text.Lazy.IO as TLIO
+-- import Text.Localize
+-- 
+-- newtype MyMonad a = MyMonad {unMyMonad :: ... }
+--   deriving (Monad)
+-- 
+-- instance Localized MyMonad where
+--   ...
+--
+-- runMyMonad :: Translations -> MyMonad a -> IO a
+-- runMyMonad = ...
+-- 
+-- hello :: T.Text -> MyMonad ()
+-- hello name = do
+--   liftIO $ TLIO.putStrLn =<< __ "Your name: "
+--   liftIO $ hFlush stdout
+--   name <- liftIO $ TLIO.getLine
+--   greeting <- __f "Hello, {}!" (Single name)
+--   liftIO $ TLIO.putStrLn greeting
+--
+-- main :: IO ()
+-- main = do
+--   translations <- locateTranslations $ linuxLocation "hello"
+--   runMyMonad translations hello
+--
+-- @
+--
+-- See also working examples under @examples/@ directory.
+--
+
 -- | Look up for translation. Returns source string if translation not found.
 lookup :: Translations -> LanguageId -> TranslationSource -> T.Text
 lookup t lang bstr =
@@ -41,7 +89,12 @@ lookup t lang bstr =
     Nothing -> toText bstr
     Just gmo -> Gettext.gettext gmo bstr
 
-withTranslation :: Localized m => (b -> r) -> (Gettext.Catalog -> Maybe Context -> b -> r) -> (b -> m r)
+-- | Execute function depending on current translation catalog and context.
+withTranslation :: Localized m
+                => (b -> r)    -- ^ Function to be executed if there is no
+                               --   translation for current language loaded.
+                -> (Gettext.Catalog -> Maybe Context -> b -> r) -- ^ Function to be executed on current catalog.
+                -> (b -> m r)  -- ^ Function lifted into @Localized@ monad.
 withTranslation dflt fn b = do
   t <- getTranslations
   lang <- getLanguage
