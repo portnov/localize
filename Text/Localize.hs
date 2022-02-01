@@ -139,7 +139,7 @@ translateN orig plural n = do
 
 -- | Translate a string and substitute variables into it.
 -- Data.Text.Format.Heavy.format syntax is used.
-translateFormat :: (Localized m, F.VarContainer vars)
+translateFormat :: (Localized m, MonadFail m, F.VarContainer vars)
                 => TranslationSource -- ^ Original formatting string
                 -> vars              -- ^ Substitution variables
                 -> m T.Text
@@ -150,13 +150,13 @@ translateFormat orig vars = do
     Right fmt -> return $ F.format fmt vars
 
 -- | Short alias for @translateFormat@.
-__f ::  (Localized m, F.VarContainer c) => TranslationSource -> c -> m T.Text
+__f ::  (Localized m, MonadFail m, F.VarContainer c) => TranslationSource -> c -> m T.Text
 __f = translateFormat
 
 -- | Translate a string, taking plural forms into account,
 -- and substitute variables into it.
 -- Data.Text.Format.Heavy.format syntax is used.
-translateNFormat :: (Localized m, F.VarContainer vars)
+translateNFormat :: (Localized m, MonadFail m, F.VarContainer vars)
                  => TranslationSource -- ^ Single form of formatting string in original language
                  -> TranslationSource -- ^ Plural form of formatting string in original language
                  -> Int               -- ^ Number
@@ -169,6 +169,6 @@ translateNFormat orig plural n vars = do
     Right fmt -> return $ F.format fmt vars
 
 -- | Short alias for @translateNFormat@.
-__n :: (Localized m, F.VarContainer c) => TranslationSource -> TranslationSource -> Int -> c -> m T.Text
+__n :: (Localized m, MonadFail m, F.VarContainer c) => TranslationSource -> TranslationSource -> Int -> c -> m T.Text
 __n = translateNFormat
 
