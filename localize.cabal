@@ -1,5 +1,5 @@
 name:                localize
-version:             0.2.0.0
+version:             0.2.0.1
 synopsis:            GNU Gettext-based messages localization library
 description:         More or less fully functional translation framework,
                      based on @haskell-gettext@ and @text-format-heavy@
