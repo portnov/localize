@@ -12,7 +12,7 @@ maintainer:          portnov84@rambler.ru
 category:            Text
 build-type:          Simple
 extra-doc-files:     README.md
-cabal-version:       >=1.18
+cabal-version:       1.18
 
 library
   exposed-modules:     Text.Localize,
