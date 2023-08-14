@@ -28,7 +28,7 @@ library
                        text >= 1.2,
                        data-default >= 0.7,
                        containers >=0.5,
-                       text-format-heavy >= 0.1.4.0,
+                       text-format-heavy >= 0.1.4.0 && < 1.6,
                        haskell-gettext >= 0.1.1.0,
                        time >=1.4,
                        transformers >=0.3,
